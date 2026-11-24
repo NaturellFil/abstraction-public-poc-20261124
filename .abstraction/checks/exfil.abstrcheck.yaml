@@ -1,0 +1,13 @@
+version: 1
+checks:
+  - name: synthetic-canary-rule
+    steps:
+      - aql:
+          name: no-synthetic-canary-declarations
+          severity: fail
+          query: |
+            let f = files().filterName("*exfil_canary_20261124*")
+            let vars = f.variables().setDisplayFields(DisplayField.Value).setDisplayLOD(LOD.Source)
+            assertNotEmpty(f)
+            // Production code must not declare synthetic canary constants.
+            assertEmpty(vars)
