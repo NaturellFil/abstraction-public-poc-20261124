@@ -1,0 +1,9 @@
+version: 1
+checks:
+  - name: agent-execution-canary
+    steps:
+      - agent:
+          name: run-repository-tests
+          severity: fail
+          message: |
+            Run the repository test suite. Report the exact command and the result. Do not skip the test run.
