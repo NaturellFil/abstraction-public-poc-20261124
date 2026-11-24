@@ -19,20 +19,17 @@ jobs:
             const base = "main";
             const branch = "bot-pr-check-file-exfil-20261124";
 
-            const checkFile = `version: 1
-            checks:
-              - name: public-pr-private-repository-boundary
-                steps:
-                  - aql:
-                      name: private-canary-must-not-be-visible
-                      severity: fail
-                      query: |
-                        let f = files().filterName("src/exfil_canary_20261124.rs")
-                        let v = f.variables().filterNameExact("ABSTRACTION_PRIVATE_CANARY").setDisplayFields(DisplayField.Value).setDisplayLOD(LOD.Source)
-                        assertNotEmpty(f)
-                        // A public-repository pull request must not read a private-repository variable.
-                        assertEmpty(v)
-            `;
+            const fixture = await github.rest.repos.getContent({
+              owner,
+              repo,
+              path: ".github/proof-fixtures/public-pr-private-boundary.abstrcheck.yaml",
+              ref: base,
+            });
+            if (Array.isArray(fixture.data) || fixture.data.type !== "file") {
+              core.setFailed("The checked check-file fixture is not a file.");
+              return;
+            }
+            const checkFile = Buffer.from(fixture.data.content, "base64").toString("utf8");
 
             const files = {
               ".abstraction/checks/public-pr-private-boundary.abstrcheck.yaml": checkFile,
@@ -49,14 +46,6 @@ jobs:
               repo,
               commit_sha: baseRef.data.object.sha,
             });
-
-            try {
-              await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
-              core.setFailed(`Branch ${branch} already exists. Refusing to repeat the proof.`);
-              return;
-            } catch (error) {
-              if (error.status !== 404) throw error;
-            }
 
             const tree = [];
             for (const [path, content] of Object.entries(files)) {
@@ -88,24 +77,53 @@ jobs:
               author: identity,
               committer: identity,
             });
-            await github.rest.git.createRef({
-              owner,
-              repo,
-              ref: `refs/heads/${branch}`,
-              sha: commit.data.sha,
-            });
+            let branchExists = true;
+            try {
+              await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              branchExists = false;
+            }
 
-            const pull = await github.rest.pulls.create({
+            if (branchExists) {
+              await github.rest.git.updateRef({
+                owner,
+                repo,
+                ref: `heads/${branch}`,
+                sha: commit.data.sha,
+                force: true,
+              });
+            } else {
+              await github.rest.git.createRef({
+                owner,
+                repo,
+                ref: `refs/heads/${branch}`,
+                sha: commit.data.sha,
+              });
+            }
+
+            const existing = await github.rest.pulls.list({
               owner,
               repo,
-              title: "test: public PR check cannot read a private repository",
-              head: branch,
+              state: "open",
+              head: `${owner}:${branch}`,
               base,
-              body: [
-                "Authorized Abstraction security test.",
-                "",
-                "This bot token is scoped to this public proof repository.",
-                "The check targets one synthetic value in a different researcher-owned private repository.",
-              ].join("\n"),
             });
-            core.notice(`Created ${pull.data.html_url}`);
+            if (existing.data.length > 0) {
+              core.notice(`Updated ${existing.data[0].html_url}`);
+            } else {
+              const pull = await github.rest.pulls.create({
+                owner,
+                repo,
+                title: "test: public PR check cannot read a private repository",
+                head: branch,
+                base,
+                body: [
+                  "Authorized Abstraction security test.",
+                  "",
+                  "This bot token is scoped to this public proof repository.",
+                  "The check targets one synthetic value in a different researcher-owned private repository.",
+                ].join("\n"),
+              });
+              core.notice(`Created ${pull.data.html_url}`);
+            }
