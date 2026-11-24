@@ -1,0 +1,2 @@
+Synthetic Abstraction CSPT empty-body merge test.
+Created at 2026-11-24T22:00:38.677827+00:00.
