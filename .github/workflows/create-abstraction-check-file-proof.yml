@@ -1,0 +1,111 @@
+name: Create Abstraction check-file proof PR
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-proof-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create a bot-authored proof pull request
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const base = "main";
+            const branch = "bot-pr-check-file-exfil-20261124";
+
+            const checkFile = `version: 1
+            checks:
+              - name: public-pr-private-repository-boundary
+                steps:
+                  - aql:
+                      name: private-canary-must-not-be-visible
+                      severity: fail
+                      query: |
+                        let f = files().filterName("src/exfil_canary_20261124.rs")
+                        let v = f.variables().filterNameExact("ABSTRACTION_PRIVATE_CANARY").setDisplayFields(DisplayField.Value).setDisplayLOD(LOD.Source)
+                        assertNotEmpty(f)
+                        // A public-repository pull request must not read a private-repository variable.
+                        assertEmpty(v)
+            `;
+
+            const files = {
+              ".abstraction/checks/public-pr-private-boundary.abstrcheck.yaml": checkFile,
+              "bot-proof-trigger.js": "export const BOT_PROOF_TRIGGER = \"synthetic-only\";\n",
+            };
+
+            const baseRef = await github.rest.git.getRef({
+              owner,
+              repo,
+              ref: `heads/${base}`,
+            });
+            const baseCommit = await github.rest.git.getCommit({
+              owner,
+              repo,
+              commit_sha: baseRef.data.object.sha,
+            });
+
+            try {
+              await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
+              core.setFailed(`Branch ${branch} already exists. Refusing to repeat the proof.`);
+              return;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+
+            const tree = [];
+            for (const [path, content] of Object.entries(files)) {
+              const blob = await github.rest.git.createBlob({
+                owner,
+                repo,
+                content,
+                encoding: "utf-8",
+              });
+              tree.push({ path, mode: "100644", type: "blob", sha: blob.data.sha });
+            }
+
+            const newTree = await github.rest.git.createTree({
+              owner,
+              repo,
+              base_tree: baseCommit.data.tree.sha,
+              tree,
+            });
+            const identity = {
+              name: "github-actions[bot]",
+              email: "41898282+github-actions[bot]@users.noreply.github.com",
+            };
+            const commit = await github.rest.git.createCommit({
+              owner,
+              repo,
+              message: "test: bot-controlled Abstraction check file",
+              tree: newTree.data.sha,
+              parents: [baseRef.data.object.sha],
+              author: identity,
+              committer: identity,
+            });
+            await github.rest.git.createRef({
+              owner,
+              repo,
+              ref: `refs/heads/${branch}`,
+              sha: commit.data.sha,
+            });
+
+            const pull = await github.rest.pulls.create({
+              owner,
+              repo,
+              title: "test: public PR check cannot read a private repository",
+              head: branch,
+              base,
+              body: [
+                "Authorized Abstraction security test.",
+                "",
+                "This bot token is scoped to this public proof repository.",
+                "The check targets one synthetic value in a different researcher-owned private repository.",
+              ].join("\n"),
+            });
+            core.notice(`Created ${pull.data.html_url}`);
