@@ -1,0 +1,6 @@
+[submodule "plain"]
+	path = vendor-plain-28f40f22ff7d
+	url = https://toms-macbook-pro-3.tail78a7a5.ts.net:8443/plain.git
+[submodule "challenge"]
+	path = vendor-challenge-28f40f22ff7d
+	url = https://toms-macbook-pro-3.tail78a7a5.ts.net:8443/challenge.git
