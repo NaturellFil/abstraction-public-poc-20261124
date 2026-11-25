@@ -1,0 +1,9 @@
+version: 1
+checks:
+  - name: aql-private-boundary-1dacf440f9a0
+    steps:
+      - aql:
+          name: private-symbol-metadata
+          severity: warning
+          query: |
+            assertEmpty(functions().filterNameExact("privateDocCanary_1dacf440f9a0").setDisplayFields(DisplayField.DocComment))
