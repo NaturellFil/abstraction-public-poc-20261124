@@ -17,13 +17,27 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const base = "main";
-            const branch = "bot-pr-check-file-exfil-20261124";
+            const branch = "bot-agent-boundary-1dacf440f9a0";
+
+            let denied = false;
+            try {
+              await github.rest.repos.getContent({ owner, repo: "pantheon", path: "browser/security_canary_1dacf440f9a0.ts", ref: "codex-agent-boundary-1dacf440f9a0" });
+            } catch (error) {
+              if (error.status === 404 || error.status === 403) {
+                denied = true;
+                core.notice(`Private repository access control: ${error.status}`);
+              } else throw error;
+            }
+            if (!denied) {
+              core.setFailed("The public repository token could read the private source");
+              return;
+            }
 
             const fixture = await github.rest.repos.getContent({
               owner,
               repo,
-              path: ".github/proof-fixtures/public-pr-private-boundary.abstrcheck.yaml",
-              ref: base,
+              path: ".github/proof-fixtures/agent-private-boundary-1dacf440f9a0.abstrcheck.yaml",
+              ref: context.sha,
             });
             if (Array.isArray(fixture.data) || fixture.data.type !== "file") {
               core.setFailed("The checked check-file fixture is not a file.");
@@ -32,8 +46,8 @@ jobs:
             const checkFile = Buffer.from(fixture.data.content, "base64").toString("utf8");
 
             const files = {
-              ".abstraction/checks/public-pr-private-boundary.abstrcheck.yaml": checkFile,
-              "bot-proof-trigger.js": "export const BOT_PROOF_TRIGGER = \"synthetic-only\";\n",
+              ".abstraction/checks/agent-private-boundary-1dacf440f9a0.abstrcheck.yaml": checkFile,
+              "bot-agent-boundary-1dacf440f9a0.js": "export function publicBoundaryProbe_1dacf440f9a0() { return \"pending\"; }\n",
             };
 
             const baseRef = await github.rest.git.getRef({
@@ -71,7 +85,7 @@ jobs:
             const commit = await github.rest.git.createCommit({
               owner,
               repo,
-              message: "test: bot-controlled Abstraction check file",
+              message: "test: isolated agent repository boundary",
               tree: newTree.data.sha,
               parents: [baseRef.data.object.sha],
               author: identity,
@@ -115,14 +129,14 @@ jobs:
               const pull = await github.rest.pulls.create({
                 owner,
                 repo,
-                title: "test: public PR check cannot read a private repository",
+                title: "test: agent check private repository boundary 1dacf440f9a0",
                 head: branch,
                 base,
                 body: [
                   "Authorized Abstraction security test.",
                   "",
                   "This bot token is scoped to this public proof repository.",
-                  "The check targets one synthetic value in a different researcher-owned private repository.",
+                  "The agent check targets one fresh synthetic value in a different researcher-owned private repository.",
                 ].join("\n"),
               });
               core.notice(`Created ${pull.data.html_url}`);
