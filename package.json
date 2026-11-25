@@ -2,5 +2,8 @@
   "name": "abstraction-public-poc",
   "version": "1.0.0",
   "private": true,
-  "description": "researcher-owned public repository"
+  "dependencies": {
+    "@naturellfil/private-dependency-cad27c7427e6": "github:NaturellFil/pantheon#6e53e087c78e27bc7001475346384066c3c3faa4",
+    "is-number": "7.0.0"
+  }
 }
