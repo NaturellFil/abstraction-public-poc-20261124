@@ -17,7 +17,7 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const base = "main";
-            const branch = "bot-agent-boundary-1dacf440f9a0";
+            const branch = "bot-agent-boundary-1dacf440f9a0-enabled";
 
             let denied = false;
             try {
