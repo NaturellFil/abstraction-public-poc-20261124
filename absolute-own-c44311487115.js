@@ -1,0 +1,1 @@
+/proc/self/cwd/regular-c44311487115.js
