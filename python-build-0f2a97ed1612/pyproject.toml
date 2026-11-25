@@ -1,0 +1,8 @@
+[build-system]
+requires = []
+build-backend = "audit_backend"
+backend-path = ["."]
+
+[project]
+name = "abstraction_build_0f2a97ed1612"
+version = "1.0.0"
