@@ -1,0 +1,6 @@
+version: 1
+rules:
+  - path: ".git/**"
+    treat: index
+  - path: ".checkout-boundary-ce3ba7894d50/**"
+    treat: index
