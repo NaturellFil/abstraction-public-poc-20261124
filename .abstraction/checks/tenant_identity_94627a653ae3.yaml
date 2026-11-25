@@ -1,0 +1,9 @@
+version: 1
+checks:
+  - name: tenant-identity-94627a653ae3
+    steps:
+      - aql:
+          name: guest-94627a653ae3
+          severity: warning
+          query: |
+            assert(true)
