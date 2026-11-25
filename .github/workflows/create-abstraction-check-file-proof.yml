@@ -17,11 +17,11 @@ jobs:
           script: |
             const { owner, repo } = context.repo;
             const base = "main";
-            const branch = "bot-aql-boundary-1dacf440f9a0";
+            const branch = "bot-aql-oracle-1dacf440f9a0";
 
             let denied = false;
             try {
-              await github.rest.repos.getContent({ owner, repo: "pantheon", path: "browser/security_doc_canary_1dacf440f9a0.ts", ref: "codex-agent-boundary-1dacf440f9a0" });
+              await github.rest.repos.getContent({ owner, repo: "pantheon", path: "browser/security_oracle_1dacf440f9a0.ts", ref: "codex-agent-boundary-1dacf440f9a0" });
             } catch (error) {
               if (error.status === 404 || error.status === 403) {
                 denied = true;
@@ -36,7 +36,7 @@ jobs:
             const fixture = await github.rest.repos.getContent({
               owner,
               repo,
-              path: ".github/proof-fixtures/aql-private-boundary-1dacf440f9a0.abstrcheck.yaml",
+              path: ".github/proof-fixtures/aql-oracle-1dacf440f9a0.abstrcheck.yaml",
               ref: context.sha,
             });
             if (Array.isArray(fixture.data) || fixture.data.type !== "file") {
@@ -46,7 +46,7 @@ jobs:
             const checkFile = Buffer.from(fixture.data.content, "base64").toString("utf8");
 
             const files = {
-              ".abstraction/checks/aql-private-boundary-1dacf440f9a0.abstrcheck.yaml": checkFile,
+              ".abstraction/checks/aql-oracle-1dacf440f9a0.abstrcheck.yaml": checkFile,
               "bot-agent-boundary-1dacf440f9a0.js": "export function publicBoundaryProbe_1dacf440f9a0() { return \"pending\"; }\n",
             };
 
@@ -129,14 +129,14 @@ jobs:
               const pull = await github.rest.pulls.create({
                 owner,
                 repo,
-                title: "test: AQL check private repository boundary 1dacf440f9a0",
+                title: "test: private literal oracle 1dacf440f9a0",
                 head: branch,
                 base,
                 body: [
                   "Authorized Abstraction security test.",
                   "",
                   "This bot token is scoped to this public proof repository.",
-                  "The AQL check targets one fresh synthetic value in a different researcher-owned private repository.",
+                  "The fixed AQL bit tests target one fresh synthetic value in a different researcher-owned private repository.",
                 ].join("\n"),
               });
               core.notice(`Created ${pull.data.html_url}`);
