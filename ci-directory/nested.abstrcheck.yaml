@@ -1,0 +1,6 @@
+version: 1
+checks:
+  - name: directory-f855dd06e780
+    steps:
+      - aql:
+          query: assert(true)

@@ -1,0 +1,6 @@
+version: 1
+checks:
+  - name: linked-f855dd06e780
+    steps:
+      - aql:
+          query: assert(true)
