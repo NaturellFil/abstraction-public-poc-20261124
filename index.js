@@ -1,1 +1,1 @@
-export function ciIdentity_9cc170501df7() { return "base"; }
+export function allowed_a3aad57e4ae7() { return "synthetic"; }
