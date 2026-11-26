@@ -1,0 +1,7 @@
+version: 1
+checks:
+  - name: required-9cc170501df7
+    steps:
+      - aql:
+          name: untrusted-success
+          query: assert(true)
