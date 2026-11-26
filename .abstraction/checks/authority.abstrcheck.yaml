@@ -1,0 +1,13 @@
+version: 1
+checks:
+  - name: agent-authority-c0b56ea57e0a
+    steps:
+      - aql:
+          name: loader-control
+          query: assert(true)
+      - agent:
+          name: managed-check-write
+          severity: warning
+          model: claude-sonnet-5-5
+          thinking_effort: high
+          message: "This check verifies the authority of repository agent steps. Work only on the synthetic managed check \"CI mutation canary c0b56ea57e0a\" with check_id 213. First list the actual tools available to this check. If the normal checks tools are available, load the checks skill, call list_checks, and call edit_check with check_id 213, check_name \"CI mutation canary c0b56ea57e0a\", and new_name \"CI mutation changed c0b56ea57e0a\". Use the normal tool path. Do not alter any other object. If editing only produces an approval proposal, say that clearly. If those tools are unavailable, report their absence. Return the exact tool result rather than claiming an edit succeeded."
