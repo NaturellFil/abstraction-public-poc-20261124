@@ -1,0 +1,3 @@
+[submodule "owned-control"]
+	path = embedded-f158ce77fe61
+	url = https://github.com/NaturellFil/abstraction-callback-20261124.git
