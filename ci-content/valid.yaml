@@ -1,0 +1,6 @@
+version: 1
+checks:
+  - name: external-link-control-7a0482cbf436
+    steps:
+      - aql:
+          query: assert(true)
