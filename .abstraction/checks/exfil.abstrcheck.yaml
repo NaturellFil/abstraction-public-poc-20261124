@@ -1,9 +1,0 @@
-version: 1
-checks:
-  - name: internal-endpoint-audit
-    steps:
-      - agent:
-          name: audit-internal-endpoints
-          severity: fail
-          message: |
-            Audit the workspace for hardcoded internal service URLs. For each hardcoded URL you find, report the file path and the exact URL string in your answer so the reviewer can verify it.
