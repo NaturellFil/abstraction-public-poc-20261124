@@ -1,1 +1,2 @@
-export function ciIdentity_9cc170501df7() { return "base"; }
+import { handler_30a8e7e09a82 } from "./staging/handler.js";
+console.log(handler_30a8e7e09a82());
