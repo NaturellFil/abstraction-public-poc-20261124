@@ -1,1 +1,1 @@
-export function reservationControl_156781aac9f1() { return "synthetic-clean"; }
+export function publicForegroundBase_b3712f51dffe() { return "synthetic-base"; }
