@@ -1,0 +1,23 @@
+name: Abstraction destination-rename proof
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  create-proof-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner,repo}=context.repo;
+            const identity={name:"github-actions[bot]",email:"41898282+github-actions[bot]@users.noreply.github.com"};
+            for(const [kind,branch,source] of [["control", "codex-base-rename-ci-control-30a8e7e09a82", "a562d0f5236fff2b7995328292a71e3bfc454b26"], ["attack", "codex-base-rename-ci-attack-30a8e7e09a82", "1a12cecee906203e10ea755e62d15accd45611c5"]]){
+             const original=(await github.rest.git.getCommit({owner,repo,commit_sha:source})).data;
+             const commit=(await github.rest.git.createCommit({owner,repo,message:"test: destination-rename CI "+kind+" "+"30a8e7e09a82",tree:original.tree.sha,parents:original.parents.map(p=>p.sha),author:identity,committer:identity})).data;
+             await github.rest.git.createRef({owner,repo,ref:"refs/heads/"+branch,sha:commit.sha});
+             const pr=(await github.rest.pulls.create({owner,repo,title:"test: destination rename "+kind+" "+"30a8e7e09a82",head:branch,base:"codex-base-rename-base-30a8e7e09a82",draft:false,body:"Researcher-owned Git history and security-check test. Preserve this PR unmerged."})).data;
+             core.notice(JSON.stringify({kind,number:pr.number,head:pr.head.sha,actor:pr.user.login,url:pr.html_url}));
+            }
