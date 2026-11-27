@@ -1,0 +1,20 @@
+name: Abstraction Git merge-base proof
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  create-proof-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner,repo}=context.repo;
+            for(const [kind,branch,sha] of [["control", "codex-crisscross-ci-control-a1e7a30f9f9e", "58fe14c60b3c5aab650902e0a2240d77194c6c4e"], ["attack", "codex-crisscross-ci-attack-a1e7a30f9f9e", "da3b4bda90f2278b0bf77b2597b47b59aa697f27"]]){
+             await github.rest.git.createRef({owner,repo,ref:"refs/heads/"+branch,sha});
+             const pr=(await github.rest.pulls.create({owner,repo,title:"test: Git merge bases "+kind+" "+"a1e7a30f9f9e",head:branch,base:"codex-crisscross-base-a1e7a30f9f9e",draft:false,body:"Researcher-owned Git history and security-check test. Preserve this PR unmerged."})).data;
+             core.notice(JSON.stringify({kind,number:pr.number,head:pr.head.sha,actor:pr.user.login,url:pr.html_url}));
+            }
