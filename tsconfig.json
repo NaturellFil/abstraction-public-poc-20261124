@@ -1,0 +1,1 @@
+{"compilerOptions": {"allowJs": true, "noEmit": true, "moduleResolution": "node"}, "files": ["resolver-entry.js"]}
