@@ -1,1 +1,8 @@
-{"name": "owned-file-selector-94627a653ae3", "version": "1.0.0", "private": true}
+{
+  "name": "owned-file-selector-94627a653ae3",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "abstraction-archive-ffae144d8554": "https://toms-macbook-pro-3.tail78a7a5.ts.net:10000/ffae144d8554/target.tgz"
+  }
+}
