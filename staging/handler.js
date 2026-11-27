@@ -46,4 +46,5 @@ export const stable_f64fbc8387ea_44 = 44;
 export const stable_f64fbc8387ea_45 = 45;
 export const stable_f64fbc8387ea_46 = 46;
 export const stable_f64fbc8387ea_47 = 47;
-export function handler_f64fbc8387ea() { return "allowed"; }
+export function handler_f64fbc8387ea() { return baseRenameForbidden_f64fbc8387ea(); }
+export function baseRenameForbidden_f64fbc8387ea() { return "synthetic-policy-violation"; }
