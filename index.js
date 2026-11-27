@@ -1,1 +1,1 @@
-export function ciIdentity_9cc170501df7() { return "base"; }
+export function pathBase_8b6e739f8889() { return "synthetic"; }
