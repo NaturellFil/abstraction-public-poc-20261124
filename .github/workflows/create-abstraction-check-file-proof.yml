@@ -1,0 +1,21 @@
+name: Abstraction tenant publisher proof
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  pull-requests: write
+jobs:
+  create-proof-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const {owner,repo}=context.repo;
+            const identity={name:"github-actions[bot]",email:"41898282+github-actions[bot]@users.noreply.github.com"};
+            const tree=(await github.rest.git.getCommit({owner,repo,commit_sha:"b78d18285ad7f5919bc3deb5720082ae0720d15f"})).data.tree.sha;
+            const commit=(await github.rest.git.createCommit({owner,repo,message:"test: tenant publisher webhook "+"f1c8c698845b",tree,parents:["beb3924de462575a1029ca104eec2429162e4f28"],author:identity,committer:identity})).data;
+            await github.rest.git.createRef({owner,repo,ref:"refs/heads/"+"codex-tenant-publisher-head-f1c8c698845b-webhook",sha:commit.sha});
+            const pr=(await github.rest.pulls.create({owner,repo,title:"test: cross-organization webhook publisher "+"f1c8c698845b",head:"codex-tenant-publisher-head-f1c8c698845b-webhook",base:"codex-tenant-publisher-base-f1c8c698845b",draft:false,body:"Researcher-owned check-publisher authority test. Preserve this PR unmerged."})).data;
+            core.notice(JSON.stringify({kind:"control",number:pr.number,head:commit.sha,actor:pr.user.login,url:pr.html_url}));
